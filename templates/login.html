@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #eef2f5;
+            display: flex;
+            justify-content: center; /* 横方向の中央 */
+            align-items: center;     /* 縦方向の中央 */
+            height: 100vh;           /* 画面全体の高さを確保 */
+            margin: 0;               /* 余白を消す */
+        }
+        .container {
+            width: 350px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+        }
+        input {
+            width: 93%;
+            padding: 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2e59a7;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1d3f7a;
+        }
+        .error {
+            margin-top: 10px;
+            color: red;
+            font-size: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 style="text-align:center;">ログイン</h2>
+
+    <input type="text" id="accountId" placeholder="アカウントID">
+    <input type="password" id="password" placeholder="パスワード">
+
+    <button onclick="login()">ログイン</button>
+
+    <div id="errorMessage" class="error"></div>
+</div>
+
+
+<script>
+function login() {
+    const accountId = document.getElementById("accountId").value;
+    const password = document.getElementById("password").value;
+
+    // 入力チェック
+    if (!accountId || !password) {
+        showError("ID と パスワードを入力してください");
+        return;
+    }
+
+    fetch("/login_check", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            accountId: accountId,
+            password: password
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("ログイン成功！");
+            window.location.href = "/menu";   // ← ログイン後に menu へ移動
+        } else {
+            showError(data.error || "ログインに失敗しました");
+        }
+    })
+    .catch(err => {
+        showError("通信エラーが発生しました");
+        console.log(err);
+    });
+}
+
+function showError(msg) {
+    const errBox = document.getElementById("errorMessage");
+    errBox.innerText = msg;
+    errBox.style.display = "block";
+}
+</script>
+
+</body>
+</html>

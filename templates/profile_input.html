@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロフィール編集</title>
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f3f6f9;
+    display: flex;
+    justify-content: center;
+    padding-top: 40px;
+}
+
+.container {
+    width: 400px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #34495e;
+}
+
+label {
+    display: block;
+    margin: 10px 0 5px;
+    color: #555;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #bbb;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.gender-group {
+    margin-bottom: 15px;
+}
+
+.gender-group label {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: #3498db;
+    color: white;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #2980b9;
+}
+
+.age-label-box {
+    font-size: 17px;
+    font-weight: bold;
+    padding: 8px 0;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>プロフィール編集</h2>
+
+    <form action="/profile_check" method="post">
+
+        <label>性別</label>
+        <div class="gender-group">
+            <label><input type="radio" name="gender" value="男性" {% if user.gender == '男性' %}checked{% endif %} required> 男性</label>
+            <label><input type="radio" name="gender" value="女性" {% if user.gender == '女性' %}checked{% endif %}> 女性</label>
+        </div>
+
+        <label>誕生日</label>
+        <input type="date" name="birthday" id="birthday" value="{{ user.birthdate or '' }}" required>
+
+        <label>年齢</label>
+        <div id="ageLabel" class="age-label-box">{% if user.age is defined %}{{ user.age }} 歳{% else %}-- 歳{% endif %}</div>
+
+        <input type="hidden" name="age" id="ageHidden" value="{{ user.age or '' }}">
+
+        <label>アレルギー</label>
+        <input type="text" name="allergy" placeholder="例：卵、乳製品、なし など" value="{{ user.allergy or '' }}">
+
+        <label>身長（cm）</label>
+        <input type="number" name="height" required value="{{ user.height or '' }}">
+
+        <label>体重（kg）</label>
+        <input type="number" name="weight" required value="{{ user.weight or '' }}">
+
+        <button type="submit">確認画面へ</button>
+    </form>
+</div>
+
+<script>
+// ▼ 年齢自動計算（◯歳表示）
+function calculateAge() {
+    const b = document.getElementById("birthday").value;
+    // ... (中略) ...
+    
+    // hidden input にもセット（サーバー送信用）
+    document.getElementById("ageHidden").value = age;
+}
+
+// ▼ 誕生日変更イベント
+document.getElementById("birthday").addEventListener("change", calculateAge);
+
+// ★ 新規: ページロード時に年齢を計算し、表示する（初期値がある場合） ★
+document.addEventListener("DOMContentLoaded", () => {
+    // 誕生日の初期値がある場合にのみ年齢を計算・表示
+    if (document.getElementById("birthday").value) {
+        calculateAge();
+    }
+});
+</script>

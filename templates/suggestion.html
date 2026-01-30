@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食事提案</title>
+    <!-- Tailwind CSS (デザイン用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 font-sans text-gray-800 p-4 md:p-8">
+
+    <div class="mx-auto px-4">
+        <h1 class="text-3xl font-bold text-center text-red-700 mb-2">栄養分析・AIレシピ提案</h1>
+        <p class="text-center text-xs text-gray-500 mb-8">外部データ連携に対応した栄養管理システム</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- 左カラム: ユーザー情報 & 履歴 -->
+            <div class="space-y-6">
+                <!-- ユーザー設定 -->
+                <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-blue-500">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">1. ユーザー設定</h3>
+                    <div id="userDataDisplay" class="space-y-2 text-sm">
+                        <!-- fetchUserData() がデータを表示します -->
+                        ユーザーデータを読み込み中...
+                    </div>
+                </div>
+
+                <!-- 本日の摂取履歴 -->
+                <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-green-500">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">2. 本日の摂取履歴</h3>
+                    <div id="intakeDataDisplay" class="space-y-2 text-sm">
+                        <!-- fetchIntakeData() がデータを表示します -->
+                        履歴データを読み込み中...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右カラム: 分析 & 提案 -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <div class="bg-white p-5 rounded-xl shadow-md border-t-4 border-red-500">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">3. 栄養分析とAI提案</h3>
+                    
+                    <div id="deficitsGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        </div>
+
+                    <div class="mb-4">
+                       <label for="mealSelector" class="block text-sm font-medium text-gray-700 mb-2">どの食事のレシピを提案しますか？</label>
+                       <select id="mealSelector" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                           <option value="朝食">朝食</option>
+                           <option value="昼食">昼食</option>
+                           <option value="夕食">夕食</option>
+                       </select>
+                   </div>
+                   
+                    <button id="proposeBtn" onclick="proposeRecipes()" disabled
+                        class="w-full py-4 rounded-lg font-bold text-white bg-gray-300 cursor-not-allowed transition-all shadow-lg">
+                        AIレシピを提案する (データ読み込み後有効化)
+                    </button>
+                </div>
+            </div> </div> <div id="recipesResult" class="hidden space-y-4 mt-6">
+            <h3 class="font-bold text-xl mt-8 mb-4 text-gray-700 border-b pb-2">4. AI提案レシピ</h3>
+            </div>
+    </div>
+
+                <!-- AI提案結果 -->
+                <div id="recipesResult" class="hidden space-y-4">
+                    <h3 class="font-bold text-lg mb-4 text-gray-700">4. AI提案レシピ</h3>
+                    <!-- proposeRecipes() が提案結果を表示します -->
+                </div>
+              
+
+<!-- 左上固定：メニューに戻るボタン（赤系テーマ） -->
+<div class="fixed top-4 left-4 z-50">
+    <button
+        onclick="window.location.href='/menu'"
+        class="flex items-center gap-2
+               px-4 py-2 rounded-full
+               bg-red-600 text-white font-bold
+               hover:bg-red-700
+               active:bg-red-800
+               shadow-lg transition"
+    >
+        ← メインメニューに戻る
+    </button>
+</div>
+
+
+ 
+            </div>
+        </div>
+    </div>
+
+<div class="mt-12 mb-8 flex justify-center">
+    <button
+        onclick="window.location.href='/menu'"
+        class="flex items-center gap-2
+               px-8 py-3 rounded-full
+               bg-red-600 text-white font-bold
+               hover:bg-red-700
+               active:bg-red-800
+               shadow-lg transition-all transform hover:scale-105"
+    >
+        ← メインメニューに戻る
+    </button>
+</div>
+
+    <!-- JavaScriptファイルを読み込みます -->
+    <script src="/static/おすすめメニュー.js"></script>
+</body>
+</html>

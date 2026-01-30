@@ -1,0 +1,316 @@
+// グローバル変数：データを保持し、他の関数（AI提案など）で利用できるようにする
+let USER_DATA = null;
+let INTAKE_DATA = null;
+let RANKING_CONTEXT = "";
+let ALLERGIES = "なし"; // デフォルト値
+// ★ 追加：各食事のカロリー目標を保持する
+window.MEAL_TARGET_CALORIES = {}; //
+
+// ----------------------------------------------------------------
+// 1. ユーザー設定の読み込み
+// ----------------------------------------------------------------
+async function fetchUserData() {
+    try {
+        // ★ ユーザー情報取得APIを呼び出す
+        const response = await fetch('/api/user');
+        const userData = await response.json();
+        
+        if (response.status !== 200) {
+            // ... (エラー処理)
+            return;
+        }
+
+        USER_DATA = userData;
+        // ★ 修正点1: userData.allergies を参照するように変更
+        ALLERGIES = userData.allergies || "なし"; // 修正後: 'allergies' から値を取得
+
+        const display = document.getElementById('userDataDisplay');
+        
+        // ★ 修正点2: 性別表示の日本語変換を削除し、DBの値（日本語の可能性が高い）を直接表示
+        display.innerHTML = `
+            <p><strong>アカウントID:</strong> <span class="text-blue-600 font-medium">${userData.accountId || '未設定'}</span></p>
+            <p><strong>年齢:</strong> ${userData.age} 歳</p>
+            <p><strong>性別:</strong> ${userData.gender}</p>
+            <p><strong>身長:</strong> ${userData.height} cm</p>
+            <p><strong>体重:</strong> ${userData.weight} kg</p>
+            <p><strong>アレルギー:</strong> <span class="text-red-600 font-medium">${ALLERGIES}</span></p>
+        `;
+        // ユーザーデータ取得後、次のステップ（摂取履歴の取得）に進む
+        fetchIntakeData();
+
+    } catch (error) {
+        console.error('ユーザーデータ取得エラー:', error);
+        document.getElementById('userDataDisplay').innerHTML = `
+            <p class="text-red-500 font-semibold">ネットワークエラー: サーバーとの通信に失敗しました。</p>
+        `;
+    }
+}
+
+// ----------------------------------------------------------------
+// 2. 本日の摂取履歴の読み込み
+// ----------------------------------------------------------------
+async function fetchIntakeData() {
+    try {
+        const response = await fetch('/api/intake');
+        const intakeData = await response.json();
+        INTAKE_DATA = intakeData;
+
+        const display = document.getElementById('intakeDataDisplay');
+        
+        if (intakeData.calories === 0 && intakeData.protein === 0) {
+            display.innerHTML = '<p class="text-gray-500">本日の摂取履歴がありません。AI提案の精度向上のため、食事を記録してください。</p>';
+        } else {
+            display.innerHTML = `
+                <p><strong>カロリー (Kcal):</strong> ${intakeData.calories.toFixed(1)}</p>
+                <p><strong>タンパク質 (g):</strong> ${intakeData.protein.toFixed(1)}</p>
+                <p><strong>脂質 (g):</strong> ${intakeData.fat.toFixed(1)}</p>
+                <p><strong>炭水化物 (g):</strong> ${intakeData.carbs.toFixed(1)}</p>
+            `;
+        }
+
+        // 履歴データ取得後、次のステップ（栄養分析とランキングの取得）に進む
+        calculateNutrition();
+        fetchRanking();
+
+    } catch (error) {
+        console.error('摂取データ取得エラー:', error);
+        document.getElementById('intakeDataDisplay').innerHTML = `
+            <p class="text-red-500 font-semibold">ネットワークエラー: サーバーとの通信に失敗しました。</p>
+        `;
+        // 失敗した場合でも分析に進むため、ユーザーデータがあれば分析を試みる
+        calculateNutrition();
+    }
+}
+
+// ----------------------------------------------------------------
+// 3. 栄養分析
+// ----------------------------------------------------------------
+function calculateNutrition() {
+    if (!USER_DATA || !INTAKE_DATA) {
+        document.getElementById('deficitsGrid').innerHTML = '<p class="col-span-4 text-center text-gray-500">ユーザー設定と摂取履歴の両方が必要です。</p>';
+        return;
+    }
+
+    // 基礎代謝量 (BMR) の計算 (ハリス・ベネディクトの式を簡略化)
+    let bmr;
+    const { weight, height, age, gender } = USER_DATA;
+    
+    if (gender === 'male') {
+        bmr = 66.47 + (13.75 * weight) + (5.00 * height) - (6.76 * age);
+    } else if (gender === 'female') {
+        bmr = 655.1 + (9.56 * weight) + (1.85 * height) - (4.68 * age);
+    } else {
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5; // 平均値的な計算
+    }
+    
+    // 活動レベルは考慮せず、簡易的にBMRの1.5倍を推定必要カロリーとする
+    const requiredCalories = bmr * 1.5;
+
+    // ★ 追加：3:4:3のカロリー割合を計算
+    window.MEAL_TARGET_CALORIES = { //
+        breakfast: (requiredCalories * 0.30).toFixed(0), // 30%
+        lunch: (requiredCalories * 0.40).toFixed(0),     // 40%
+        dinner: (requiredCalories * 0.30).toFixed(0)     // 30%
+    }; //
+
+    // 推定必要PFC（タンパク質, 脂質, 炭水化物）
+    // P: 20%, F: 25%, C: 55% の割合で計算
+    const requiredProtein = (requiredCalories * 0.20) / 4; // 1gあたり4kcal
+    const requiredFat = (requiredCalories * 0.25) / 9;     // 1gあたり9kcal
+    const requiredCarbs = (requiredCalories * 0.55) / 4;    // 1gあたり4kcal
+    
+    const intake = INTAKE_DATA;
+
+    // 不足分の計算
+    const deficitData = [
+        { label: 'カロリー', required: requiredCalories, intake: intake.calories, unit: 'Kcal', isDeficit: false },
+        { label: 'タンパク質', required: requiredProtein, intake: intake.protein, unit: 'g', isDeficit: false },
+        { label: '脂質', required: requiredFat, intake: intake.fat, unit: 'g', isDeficit: false },
+        { label: '炭水化物', required: requiredCarbs, intake: intake.carbs, unit: 'g', isDeficit: false }
+    ];
+
+    let deficitsList = [];
+    let htmlContent = '';
+
+    deficitData.forEach(item => {
+        const remaining = item.required - item.intake;
+        const remainingValue = remaining > 0 ? remaining.toFixed(1) : 0;
+        const percentage = (item.intake / item.required) * 100;
+        
+        // 達成度に応じて色とメッセージを設定
+        let bgColor = 'bg-red-100';
+        let borderColor = 'border-red-500';
+        let textColor = 'text-red-700';
+        let message = '不足';
+        
+        if (percentage >= 100) {
+            bgColor = 'bg-green-100';
+            borderColor = 'border-green-500';
+            textColor = 'text-green-700';
+            message = '達成';
+        } else if (percentage >= 80) {
+            bgColor = 'bg-yellow-100';
+            borderColor = 'border-yellow-500';
+            textColor = 'text-yellow-700';
+            message = 'もう少し';
+        }
+
+        if (remaining > 0) {
+             deficitsList.push(item.label);
+             item.isDeficit = true;
+        }
+
+
+        htmlContent += `
+            <div class="${bgColor} p-3 rounded-lg border-b-4 ${borderColor} transition-transform hover:scale-[1.02]">
+                <p class="text-xs font-semibold ${textColor} mb-1">${item.label} (${message})</p>
+                <p class="text-2xl font-extrabold text-gray-800">${remainingValue}</p>
+                <p class="text-xs text-gray-600">${item.unit} / 残り必要量</p>
+            </div>
+        `;
+    });
+
+    document.getElementById('deficitsGrid').innerHTML = htmlContent;
+
+    // AI提案ボタンを有効化し、不足栄養素のリストを設定
+    const proposeBtn = document.getElementById('proposeBtn');
+    proposeBtn.disabled = false;
+    proposeBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
+    proposeBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    proposeBtn.textContent = 'AIレシピを提案する';
+
+    // 不足栄養素リストをグローバルに保持（AI提案時に使用）
+    window.DEFICITS_LIST = deficitsList.join('、') || 'カロリー';
+}
+
+// ----------------------------------------------------------------
+// 4. 楽天ランキングの読み込み
+// ----------------------------------------------------------------
+async function fetchRanking() {
+    try {
+        const response = await fetch('/api/rakuten_ranking');
+        const rankingData = await response.json();
+        
+        if (response.status !== 200 || !rankingData.result) {
+            console.error("楽天ランキング取得失敗:", rankingData.error);
+            // 失敗してもAI提案は続行可能
+            return;
+        }
+        
+        const rankingGrid = document.getElementById('rankingGrid');
+        let htmlContent = '';
+        let rankingContext = '人気レシピトレンド：';
+        
+        // 最大4件表示
+        rankingData.result.slice(0, 4).forEach(item => {
+            const recipe = item.recipeTitle;
+            const imageUrl = item.foodImageUrl || 'https://placehold.co/100x100/ccc/fff?text=No+Img';
+            const url = item.recipeUrl || '#';
+            
+            htmlContent += `
+                <a href="${url}" target="_blank" class="flex flex-col items-center bg-gray-50 p-2 rounded-lg hover:shadow-lg transition">
+                    <img src="${imageUrl}" alt="${recipe}" class="w-12 h-12 object-cover rounded-full mb-1 border border-gray-200">
+                    <p class="text-xs font-medium text-center line-clamp-2">${recipe}</p>
+                </a>
+            `;
+            rankingContext += `[${recipe}]`;
+        });
+        
+        rankingGrid.innerHTML = htmlContent;
+        document.getElementById('rakutenRankingArea').classList.remove('hidden');
+        RANKING_CONTEXT = rankingContext; // AI提案に渡すためのトレンド情報を設定
+
+    } catch (error) {
+        console.error('楽天ランキング取得エラー:', error);
+        // エラー時は非表示のまま
+    }
+}
+
+
+// ----------------------------------------------------------------
+// 5. AIレシピの提案
+// ----------------------------------------------------------------
+async function proposeRecipes() {
+    const proposeBtn = document.getElementById('proposeBtn');
+    const resultsDiv = document.getElementById('recipesResult');
+
+    proposeBtn.disabled = true;
+    proposeBtn.textContent = 'AIがレシピを考案中...';
+    resultsDiv.classList.add('hidden');
+    resultsDiv.innerHTML = `<div class="p-6 text-center text-gray-500">レシピ生成中...</div>`;
+    resultsDiv.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/propose', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                deficits: window.DEFICITS_LIST,
+                allergies: ALLERGIES, // グローバル変数からアレルギー情報を取得
+                rankingContext: RANKING_CONTEXT
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.status !== 200) {
+            resultsDiv.innerHTML = `<div class="p-6 text-red-500 font-semibold">提案エラー: ${data.error || 'サーバーエラー'}</div>`;
+            return;
+        }
+        
+        // AIの応答はJSON文字列として返されるため、パースする
+        const recipes = JSON.parse(data.result);
+        
+        let htmlContent = '<div class="space-y-4">';
+        
+        recipes.forEach(recipe => {
+    // 【修正点】
+    // AIが生成するURLは架空の可能性があるため、
+    // 確実にヒットさせるために「レシピ名」を使って楽天レシピの検索ページへ飛ばします。
+    // mainIngredient（主食材）だけだと範囲が広すぎるため、recipeNameを使います。
+    
+    // 検索ワードとして使いやすいように、レシピ名を使用
+    const searchWord = recipe.recipeName; 
+    const finalUrl = `https://recipe.rakuten.co.jp/search/${encodeURIComponent(searchWord)}/`;
+
+    htmlContent += `
+        <div class="bg-white p-5 rounded-xl shadow-md border-l-8 border-purple-500">
+            
+            <a href="${finalUrl}" target="_blank" class="block">
+                <h4 class="text-xl font-bold text-purple-700 mb-2 hover:underline">${recipe.meal} - ${recipe.recipeName}</h4>
+            </a>
+            
+            <p class="text-sm text-gray-600 mb-3">${recipe.description}</p>
+            <div class="flex justify-between items-center text-xs text-gray-500 mb-4">
+                <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-semibold">
+                    主食材: ${recipe.mainIngredient}
+                </span>
+                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-semibold">
+                    調理時間: ${recipe.prepTimeMinutes} 分
+                </span>
+            </div>
+            <a href="${finalUrl}" target="_blank" 
+               class="inline-block px-4 py-2 bg-pink-500 text-white text-sm font-medium rounded-lg hover:bg-pink-600 transition">
+                楽天レシピで「${recipe.recipeName}」を検索
+            </a>
+        </div>
+    `;
+});
+        
+        htmlContent += '</div>';
+        resultsDiv.innerHTML = htmlContent;
+
+    } catch (error) {
+        console.error('AI提案処理エラー:', error);
+        resultsDiv.innerHTML = `<div class="p-6 text-red-500 font-semibold">通信エラーまたはJSON解析エラーが発生しました。</div>`;
+    } finally {
+        proposeBtn.disabled = false;
+        proposeBtn.textContent = 'AIレシピを提案する';
+    }
+}
+
+
+// ----------------------------------------------------------------
+// 初期化：データ読み込み開始
+// ----------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', fetchUserData);

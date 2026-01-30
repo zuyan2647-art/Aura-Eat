@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>AuraEat - 新規登録</title>
+    <style>
+        body { font-family: "Segoe UI", sans-serif; background: #eef2f7; margin: 0; padding: 0; }
+        header { background: #3f72af; padding: 18px; text-align: center; color: white; font-size: 22px; font-weight: bold; }
+        .container { max-width: 700px; margin: 30px auto; padding: 0 20px; }
+        .card { background: #fff; border-radius: 10px; padding: 25px; margin-bottom: 30px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-left: 6px solid #3f72af; }
+        .card h2 { margin-top: 0; color: #112d4e; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+        label { display: block; margin-top: 14px; font-weight: bold; color: #333; }
+        input, select { width: 95%; padding: 10px; margin-top: 6px; border-radius: 6px;
+                        border: 1px solid #aaa; font-size: 15px; }
+        .radio-group { margin-top: 6px; display: flex; gap: 20px; font-size: 15px; }
+        button { display: block; width: 100%; padding: 12px; background: #3f72af; color: white;
+                 font-size: 17px; border: none; border-radius: 6px; margin-top: 20px; cursor: pointer; }
+        button:hover { background: #2c5190; }
+        #birthYear { width: 98% }
+        #birthMonth { width: 98% }
+        #birthDay { width: 98% }
+    </style>
+</head>
+<body>
+
+<header>新規登録</header>
+
+<div class="container">
+
+    <!-- アカウント情報 -->
+    <div class="card">
+        <h2>アカウント登録</h2>
+
+        <label for="accountId">アカウントID</label>
+        <input type="text" id="accountId" placeholder="例: user123">
+
+        <label for="password">パスワード</label>
+        <input type="password" id="password" placeholder="パスワードを入力">
+    </div>
+
+<!-- プロフィール -->
+<div class="card">
+    <h2>プロフィール</h2>
+
+    <label for="weight">体重 (kg)</label>
+    <input type="number" id="weight" placeholder="体重">
+
+    <label for="height">身長 (cm)</label>
+    <input type="number" id="height" placeholder="身長">
+
+    <label>性別</label>
+    <div class="radio-group">
+        <label><input type="radio" name="gender" value="male"> 男性</label>
+        <label><input type="radio" name="gender" value="female"> 女性</label>
+    </div>
+
+    <label>生年月日</label>
+    <select id="birthYear"></select>
+    <select id="birthMonth"></select>
+    <select id="birthDay"></select>
+
+    <!-- ▼ 年齢を「◯歳」とラベルで表示 -->
+    <label>年齢</label>
+    <div id="ageLabel" style="font-size: 18px; margin-top: 5px; font-weight: bold;">-- 歳</div>
+
+    <label for="allergy">アレルギー</label>
+    <input type="text" id="allergy" placeholder="例: 卵、乳、小麦">
+
+    <button onclick="submitForm()">登録する</button>
+    <button onclick="location.href='/'">戻る</button>
+</div>
+
+
+
+</div>
+
+<script>
+
+// ▼ 生年月日プルダウン生成 + 年齢自動計算イベント登録
+window.onload = function() {
+    const yearSelect = document.getElementById("birthYear");
+    const monthSelect = document.getElementById("birthMonth");
+    const daySelect = document.getElementById("birthDay");
+
+    // 年（2025〜1950）
+    for (let y = 2025; y >= 1950; y--) {
+        yearSelect.add(new Option(`${y}年`, y));
+    }
+
+    // 月
+    for (let m = 1; m <= 12; m++) {
+        monthSelect.add(new Option(`${m}月`, m));
+    }
+
+    // 日
+    for (let d = 1; d <= 31; d++) {
+        daySelect.add(new Option(`${d}日`, d));
+    }
+
+    // 生年月日の選択が変わったら年齢更新
+    yearSelect.onchange = updateAge;
+    monthSelect.onchange = updateAge;
+    daySelect.onchange = updateAge;
+};
+
+
+// ▼ 年齢自動計算（◯歳ラベル表示版）
+function updateAge() {
+    const year = parseInt(document.getElementById("birthYear").value);
+    const month = parseInt(document.getElementById("birthMonth").value);
+    const day = parseInt(document.getElementById("birthDay").value);
+
+    if (!year || !month || !day) return;
+
+    const today = new Date();
+    const birthDate = new Date(year, month - 1, day);
+
+    let age = today.getFullYear() - year;
+
+    const hasBirthdayPassed =
+        today.getMonth() > birthDate.getMonth() ||
+        (today.getMonth() === birthDate.getMonth() && today.getDate() >= birthDate.getDate());
+
+    if (!hasBirthdayPassed) {
+        age -= 1;
+    }
+
+    // ラベルに「◯歳」と表示
+    document.getElementById("ageLabel").textContent = age + "歳";
+
+    // サーバー送信用に age を格納しておく
+    window.calculatedAge = age;
+}
+
+
+
+// ▼ データ送信処理
+function submitForm() {
+
+    const gender = document.querySelector('input[name="gender"]:checked');
+
+    const data = {
+        accountId: document.getElementById("accountId").value,
+        password: document.getElementById("password").value,
+        age: window.calculatedAge,
+        weight: document.getElementById("weight").value,
+        height: document.getElementById("height").value,
+        gender: gender ? gender.value : null,
+        birth: {
+            year: document.getElementById("birthYear").value,
+            month: document.getElementById("birthMonth").value,
+            day: document.getElementById("birthDay").value
+        },
+        allergy: document.getElementById("allergy").value
+    };
+
+    if (!data.accountId || !data.password) {
+        alert("アカウントIDとパスワードは必須です。");
+        return;
+    }
+
+    fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+    })
+    .then(res => res.json())
+    .then(result => {
+        alert("登録が完了しました！");
+        window.location.href = "/login";
+    })
+    .catch(err => {
+        console.error("Error:", err);
+        alert("登録に失敗しました。");
+    });
+}
+
+</script>
+
+
+</body>
+</html>

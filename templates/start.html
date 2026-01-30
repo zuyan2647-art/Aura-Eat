@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraEat - タイトル画面</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background: #f0f4ff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 50px;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 40px;
+        }
+
+        .menu-button {
+            width: 180px;
+            padding: 18px 0;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            background: #3f72af;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .menu-button:hover {
+            background: #2c5190;
+            transform: translateY(-4px);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>AuraEat</h1>
+
+    <div class="button-container">
+        <button class="menu-button" onclick="location.href='/login'">ログイン</button>
+        <button class="menu-button" onclick="location.href='/sentaku'">新規登録</button>
+    </div>
+
+</body>
+</html>
