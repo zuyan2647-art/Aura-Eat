@@ -18,8 +18,8 @@ app.secret_key = "your-secret-key"
 DB_PATH = os.path.join(BASE_DIR, "mydatabase.db")
 
 # APIキー（そのまま引き継ぎ）
-GEMINI_API_KEY = "AIzaSyDMnnsEhow2f-jBcCHhP04PApOY2h808ag"
-RAKUTEN_APP_ID = "1040440591394275196"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+RAKUTEN_APP_ID = os.environ.get("RAKUTEN_APP_ID")
 PLACEHOLDER_ID = "YOUR_RAKUTEN_APP_ID_HERE"
 PLACEHOLDER_KEY = "YOUR_GEMINI_API_KEY_HERE"
 
@@ -796,4 +796,5 @@ def get_meal_history():
 # ---------- 起動 ----------
 # app.py の末尾（確認）
 if __name__ == "__main__":
+
     app.run(host='0.0.0.0', debug=True)
