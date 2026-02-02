@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食事履歴</title>
+
+    <style>
+        body {
+            font-family: 'Avenir', 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #f39c12;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e67e22;
+            margin-bottom: 30px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+
+        #sort-options {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #e8e8e8;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        table {
+            width: 95%;
+            max-width: 1000px;
+            margin: 0 auto 30px;
+            border-collapse: collapse;
+            background-color: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+            padding: 12px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ecf0f1;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        .meal-image {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .meal-image img {
+            width: 140px;
+            border-radius: 10px;
+        }
+
+        #delete-button {
+            background-color: #e74c3c;
+            margin-bottom: 20px;
+        }
+
+        #total-nutrition {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            text-align: left;
+        }
+        /* ===== 画像モーダル ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    inset: 0;
+    background-color: rgba(0,0,0,0.8);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal img {
+    max-width: 90%;
+    max-height: 90%;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+    </style>
+</head>
+<!-- 画像拡大モーダル -->
+<div id="image-modal" class="modal" onclick="closeModal(event)">
+    <span class="close" onclick="closeModal(event)">×</span>
+    <img id="modal-image">
+</div>
+
+<body>
+
+<h1>📋 食事履歴</h1>
+
+<a href="/menu" class="back-button">🏠 メインメニューに戻る</a>
+
+<div id="sort-options">
+    <strong>期間表示:</strong>
+    <a href="{{ url_for('rireki', period='today') }}">当日</a> |
+    <a href="{{ url_for('rireki', period='week') }}">一週間</a> |
+    <a href="{{ url_for('rireki', period='month') }}">一か月</a> |
+    <a href="{{ url_for('rireki', period='all') }}">全て</a>
+</div>
+
+{% if meals|length == 0 %}
+<p>まだ食事履歴はありません。</p>
+{% else %}
+
+<table>
+    <tr>
+        <th>選択</th>
+        <th>記録日</th>
+        <th>料理名</th>
+        <th>カロリー</th>
+        <th>タンパク質</th>
+        <th>脂質</th>
+        <th>炭水化物</th>
+        <th>画像</th>
+    </tr>
+
+    {% for m in meals %}
+    <tr data-record-date="{{ m.record_date }}">
+        <td><input type="checkbox" class="delete-checkbox"></td>
+        <td>{{ m.record_date }}</td>
+        <td>{{ m.food_item }}</td>
+        <td>{{ m.calories }}</td>
+        <td>{{ m.protein }}</td>
+        <td>{{ m.fat }}</td>
+        <td>{{ m.carb }}</td>
+        <td>
+            {% if m.image %}
+            <button onclick="openModal('{{ m.image }}')">画像確認</button>
+            <div id="img-{{ loop.index0 }}" class="meal-image">
+                <img src="{{ m.image }}">
+            </div>
+            {% else %}
+            なし
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<button id="delete-button" onclick="deleteSelectedMeals()">選択した履歴を削除</button>
+
+<div id="total-nutrition">
+    <h3>合計栄養素（本日分）</h3>
+    <p>カロリー: {{ total_cal }} kcal</p>
+    <p>タンパク質: {{ total_pro }} g</p>
+    <p>脂質: {{ total_fat }} g</p>
+    <p>炭水化物: {{ total_carb }} g</p>
+</div>
+
+{% endif %}
+
+<script>
+function openModal(imageSrc) {
+    const modal = document.getElementById("image-modal");
+    const modalImg = document.getElementById("modal-image");
+
+    modalImg.src = imageSrc;
+    modal.style.display = "flex";
+}
+
+function closeModal(event) {
+    // 背景 or × をクリックした時だけ閉じる
+    if (event.target.id === "image-modal" || event.target.className === "close") {
+        document.getElementById("image-modal").style.display = "none";
+    }
+}
+</script>
+
+<script>
+function toggleImage(index) {
+    const img = document.getElementById("img-" + index);
+    if (!img) return;
+    img.style.display = img.style.display === "none" ? "block" : "none";
+}
+
+function deleteSelectedMeals() {
+    const checked = document.querySelectorAll(".delete-checkbox:checked");
+    if (checked.length === 0) {
+        alert("削除する履歴を選択してください");
+        return;
+    }
+
+    if (!confirm("選択した履歴を削除しますか？")) return;
+
+    const recordDates = [];
+    checked.forEach(cb => {
+        const tr = cb.closest("tr");
+        recordDates.push(tr.dataset.recordDate);
+    });
+
+    fetch("/delete_meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordDates })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("削除しました");
+            location.reload();
+        } else {
+            alert("削除失敗");
+        }
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロフィール確認</title>
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    background: #fafafa;
+    display: flex; /* ★これがあるため中央寄せになっています */
+    justify-content: center; /* ★水平方向の中央寄せ */
+    align-items: center; /* ★垂直方向の中央寄せ */
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    width: 450px;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.info-box {
+    background: #f7f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border-left: 5px solid #3498db;
+}
+
+p {
+    margin: 8px 0;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: #2ecc71;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #27ae60;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>プロフィール確認</h2>
+
+    <div class="info-box">
+        <p><strong>年齢：</strong> {{ age }}歳</p>
+        <p><strong>性別：</strong> {{ gender }}</p>
+        <p><strong>誕生日：</strong> {{ birthday }}</p>
+        <p><strong>アレルギー：</strong> {{ allergy }}</p>
+        <p><strong>身長：</strong> {{ height }} cm</p>
+        <p><strong>体重：</strong> {{ weight }} kg</p>
+    </div>
+
+    <form action="/update_profile_from_check" method="post">
+
+        <!-- hidden inputs（確認画面 → 保存処理用） -->
+        <input type="hidden" name="age" value="{{ age }}">
+        <input type="hidden" name="gender" value="{{ gender }}">
+        <input type="hidden" name="birthday" value="{{ birthday }}"> 
+        <input type="hidden" name="allergy" value="{{ allergy }}">
+        <input type="hidden" name="height" value="{{ height }}">
+        <input type="hidden" name="weight" value="{{ weight }}">
+
+        <button type="submit">保存して閲覧画面へ</button>
+    </form>
+
+</div>
+
+</body>
+</html>
+

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロフィール閲覧</title>
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    background: #fafafa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.card {
+    width: 90%;
+    max-width: 430px;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+h2 {
+    color: #3498db;
+    margin-bottom: 25px;
+    font-size: 2rem;
+}
+
+.profile-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    margin: 0 20px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 17px;
+    color: #444;
+}
+
+.profile-item:last-child {
+    border-bottom: none;
+}
+
+.tag {
+    font-weight: bold;
+    color: #2c3e50;
+    text-align: left;
+    width: 40%;
+}
+
+.value {
+    color: #3498db;
+    font-weight: 600;
+    text-align: right;
+    width: 60%;
+}
+
+.btn-group {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* ボタン間のスペース */
+}
+
+.btn {
+    padding: 14px 25px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.1s;
+    text-decoration: none; /* <a>要素のスタイルをリセット */
+    display: block; /* <a>要素をブロック要素にする */
+}
+
+/* 編集ボタンのスタイル */
+.edit-btn {
+    background: linear-gradient(45deg, #9b59b6, #8e44ad);
+    box-shadow: 0 4px 10px rgba(155, 89, 182, 0.4);
+}
+
+.edit-btn:hover {
+    background: linear-gradient(45deg, #8e44ad, #9b59b6);
+    transform: translateY(-1px);
+}
+
+/* メニューボタンのスタイル */
+.menu-btn {
+    background: linear-gradient(45deg, #34495e, #2c3e50);
+    box-shadow: 0 4px 10px rgba(52, 73, 94, 0.4);
+}
+
+.menu-btn:hover {
+    background: linear-gradient(45deg, #2c3e50, #34495e);
+    transform: translateY(-1px);
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+    <h2>プロフィール</h2>
+
+    <div class="profile-item">
+        <span class="tag">アカウントID:</span><span class="value">{{ user.accountId }}</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">年齢:</span><span class="value">{{ user.age }} 歳</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">性別:</span><span class="value">{{ user.gender }}</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">誕生日:</span><span class="value">{{ user.birthdate }}</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">アレルギー:</span><span class="value">{{ user.allergy }}</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">身長:</span><span class="value">{{ user.height }} cm</span>
+    </div>
+    <div class="profile-item">
+        <span class="tag">体重:</span><span class="value">{{ user.weight }} kg</span>
+    </div>
+
+    <!-- ボタンをまとめるグループ -->
+    <div class="btn-group">
+        <!-- 編集ボタン (profile_inputに戻る) -->
+        <a href="/profile_input" class="btn edit-btn">プロフィールを編集する</a>
+        
+        <!-- メニューに戻るボタン -->
+        <a href="/menu" class="btn menu-btn">メインメニューに戻る</a>
+    </div>
+</div>
+
+</body>
+</html>

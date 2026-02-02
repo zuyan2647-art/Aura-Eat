@@ -1,0 +1,14 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Open index.html",
+            "file": "\\\\10.23.107.200\\share\\卒業研究2025\\01作業用フォルダ\\12_S3A1\\Calorie Canvas\\作業管理\\ログイン画面\\index.html"
+        }
+    ]
+}
